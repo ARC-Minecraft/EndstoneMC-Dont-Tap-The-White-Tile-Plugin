@@ -9,6 +9,7 @@ from typing import Optional, Dict, Any, List, Tuple
 from endstone import ColorFormat, Player
 from endstone.command import Command, CommandSender
 from endstone.event import event_handler, PlayerInteractEvent, BlockBreakEvent
+from endstone.form import ActionForm
 from endstone.plugin import Plugin
 
 from endstone_arc_dtwt.DatabaseManager import DatabaseManager
@@ -24,17 +25,23 @@ class ARCDTWTPlugin(Plugin):
             {
                 "description": "Show description of 'ARC Don't Tap the White Tile' plugin.",
                 "usages": ["/dtwt"],
-                "permissions": ["arc_dtwt.command.dtwt"],
+                "permissions": ["arc_dtwt.command.dtwt"]
             },
-        "createdtwt": {
-            "description": "Create a new game facility, will delete the old one if exists.",
-            "usages": ["/createdtwt"]
-        }
+        "createdtwt": 
+            {
+                "description": "Create a new game facility, will delete the old one if exists.",
+                "usages": ["/createdtwt"],
+                "permissions": ["arc_dtwt.command.createdtwt"]
+            }
     }
     permissions = {
         "arc_dtwt.command.dtwt": {
             "description": "Can used by everyone.",
-            "default": True,
+            "default": True
+        },
+        "arc_dtwt.command.createdtwt": {
+            "description": "Can used by OP.",
+            "default": "op"
         }
     }
 
@@ -53,6 +60,7 @@ class ARCDTWTPlugin(Plugin):
         # Current Facility
         self.current_facility = self.get_game_facility()
         if self.current_facility is not None:
+            # 在__init__中不能使用self.logger打印，因为self.logger还没有初始化
             print(f'[ARC DTWT]Successfully load game facility, game displayer ({self.current_facility['screen_start']} -> {self.current_facility['screen_end']}), start trigger at {self.current_facility['trigger_pos']}.')
 
         # Deploy new facility function
@@ -125,24 +133,7 @@ class ARCDTWTPlugin(Plugin):
             if not isinstance(sender, Player):
                 sender.send_message(f'[ARC DTWT]This command only works for players.')
                 return True
-            best_three_record = self.get_leaderboard(3)
-            top1_record = 'null-∞' if len(best_three_record) < 1 else f'{best_three_record[0][0]}-{round(best_three_record[0][1], 3)} '
-            top2_record = 'null-∞' if len(best_three_record) < 2 else f'{best_three_record[1][0]}-{round(best_three_record[1][1], 3)} '
-            top3_record = 'null-∞' if len(best_three_record) < 3 else f'{best_three_record[2][0]}-{round(best_three_record[2][1], 3)} '
-            sender_player = self.server.get_player(sender.name)
-            if sender_player is not None:
-                sender_record = self.get_player_best_time(sender_player.xuid)
-                if sender_record is None:
-                    sender_record = '∞'
-                else:
-                    sender_record = round(sender_record, 3)
-                sender_rank = self.get_player_rank(sender_player.xuid)
-                if sender_rank is None:
-                    sender_rank = '∞'
-            else:
-                sender_record = '∞'
-                sender_rank = '∞'
-            sender.send_message(self.language_manager.GetText('DTWT_DESCRIPTION').replace('\\n', '\n').format(self.total_black_tile_num, top1_record, top2_record, top3_record, sender_record, sender_rank))
+            self.show_dtwt_panel(sender)
             return True
         if command.name == "createdtwt":
             if not isinstance(sender, Player):
@@ -154,15 +145,55 @@ class ARCDTWTPlugin(Plugin):
                 self.creator_name = sender.name
                 sender.send_message(self.language_manager.GetText('DTWT_CREATE_HINT1'))
             else:
-                sender.send_message(self.language_manager.GetText('DTWT_HAS_ANOTHER_CREATOR_MESSAGE'))
+                sender.send_message(self.language_manager.GetText('DTWT_HAS_ANOTHER_CREATOR_MESSAGE').format(self.creator_name))
             return True
         return False
+
+    def show_dtwt_panel(self, player: Player):
+        """显示DTWT游戏信息和排行榜面板"""
+        # 获取前10个记录
+        top_records = self.get_leaderboard(10)
+        
+        # 构建排行榜列表
+        rank_list = []
+        if len(top_records) > 0:
+            for i, (player_name, best_time) in enumerate(top_records):
+                rank_list.append(f"§6{i + 1}. §f{player_name} - §a{round(best_time, 3)}秒")
+        else:
+            rank_list.append("§7暂无记录")
+        
+        # 获取当前玩家的记录
+        player_best_time = self.get_player_best_time(player.xuid)
+        player_rank = self.get_player_rank(player.xuid)
+        
+        if player_best_time is None:
+            player_record_text = "§c您还没有完成记录"
+        else:
+            player_record_text = f"§e您的最佳记录: §a{round(player_best_time, 3)}秒\n§e您的排名: §6第{player_rank if player_rank is not None else '∞'}名"
+        
+        # 构建面板内容
+        content = f"§l§bARC 别踩白块游戏§r\n\n"
+        content += f"§e游戏目标: §f点击 §6{self.total_black_tile_num} §f个黑色方块\n\n"
+        content += f"§l§6=== 排行榜 TOP 10 ===§r\n"
+        content += '\n'.join(rank_list) + '\n\n'
+        content += f"§l§e=== 您的记录 ===§r\n"
+        content += player_record_text
+        
+        # 创建面板
+        dtwt_panel = ActionForm(
+            title="§l§bARC 别踩白块",
+            content=content
+        )
+        
+        player.send_form(dtwt_panel)
 
     @event_handler
     def on_player_interact(self, event: PlayerInteractEvent):
         if self.if_in_deploying_state:
             if event.player.name == self.creator_name:
                 if not self.check_if_valid_click(self.creator_name):
+                    return
+                if event.block is None:
                     return
                 if event.block.dimension.name != 'Overworld':
                     event.player.send_message(self.language_manager.GetText('DTWT_CREATE_WRONG_DIMENSION_MESSAGE').format(event.block.dimension.name))
@@ -221,6 +252,8 @@ class ARCDTWTPlugin(Plugin):
         if self.if_in_game and event.player.name == self.player_name:
             if not self.check_if_valid_click(self.creator_name):
                 return
+            if event.block is None:
+                return
             # Update game
             screen_pos = self.convert_world_pos_to_screen_pos((event.block.location.x, event.block.location.y, event.block.location.z))
             if screen_pos is None:
@@ -245,13 +278,35 @@ class ARCDTWTPlugin(Plugin):
             return
         return
 
+    def api_judge_if_start_block(self, x: float, y: float, z: float, dimension_name: str) -> bool:
+        """
+        判断指定坐标的方块是否为游戏开始方块
+        :param x: 方块X坐标
+        :param y: 方块Y坐标
+        :param z: 方块Z坐标
+        :param dimension_name: 维度名称
+        :return: 是否为游戏开始方块
+        """
+        if self.current_facility is None or dimension_name != "Overworld":
+            # print('No current facility or dimension is not Overworld')
+            return False
+        
+        # print(f'x: {x}, y: {y}, z: {z}, trigger_pos: {self.current_facility["trigger_pos"]}')
+        # 检查坐标是否匹配触发方块位置
+        if (math.floor(x) == self.current_facility['trigger_pos'][0] and
+            math.floor(y) == self.current_facility['trigger_pos'][1] and
+            math.floor(z) == self.current_facility['trigger_pos'][2]):
+            return True
+        
+        return False
+
     @event_handler
     def on_block_breaked(self, event: BlockBreakEvent):
         if self.current_facility is not None:
             if not self.if_in_game:
-                if (event.block.location.x == self.current_facility['trigger_pos'][0] and
-                        event.block.location.y == self.current_facility['trigger_pos'][1] and
-                        event.block.location.z == self.current_facility['trigger_pos'][2]):
+                if event.block is None:
+                    return
+                if self.api_judge_if_start_block(event.block.location.x, event.block.location.y, event.block.location.z, event.block.dimension.name):
                     self.start_game(event.player.name)
                     event.player.send_message(self.language_manager.GetText('DTWT_GAME_START_HINT'))
                     self.server.broadcast_message(self.language_manager.GetText('DTWT_GAME_START_BROADCAST').format(event.player.name))
@@ -259,7 +314,9 @@ class ARCDTWTPlugin(Plugin):
                     return
                 return
             else:
-                if event.block.location.x == self.current_facility['trigger_pos'][0] and event.block.location.y == self.current_facility['trigger_pos'][1] and event.block.location.z == self.current_facility['trigger_pos'][2]:
+                if event.block is None:
+                    return
+                if self.api_judge_if_start_block(event.block.location.x, event.block.location.y, event.block.location.z, event.block.dimension.name):
                     event.player.send_message(self.language_manager.GetText('DTWT_GAME_ALREADY_STARTED_MESSAGE').format(self.player_name))
                     event.is_cancelled = True
                     return
@@ -318,15 +375,25 @@ class ARCDTWTPlugin(Plugin):
                     self.check_and_give_rank_reward(player, new_rank)
             
             # Broadcast
-            self.server.broadcast_message(self.language_manager.GetText('DTWT_PLAYER_WIN_BROADCAST').format(player.name,
+            best_time = self.get_player_best_time(player.xuid)
+            player_rank = self.get_player_rank(player.xuid)
+            broadcast_message = self.language_manager.GetText('DTWT_PLAYER_WIN_BROADCAST').format(player.name,
                                                                                                             round(time_cost, 3),
-                                                                                                            round(self.get_player_best_time(player.xuid), 3),
-                                                                                                            self.get_player_rank(player.xuid)))
+                                                                                                            round(best_time, 3) if best_time is not None else '∞',
+                                                                                                            player_rank if player_rank is not None else '∞')
+            self.server.broadcast_message(broadcast_message)
+            
+            # Send to QQ group
+            self.send_to_qq_group(broadcast_message)
         else:
             # Set displayer color
             self.display_single_color('red')
             # Broadcast
-            self.server.broadcast_message(self.language_manager.GetText('DTWT_PLAYER_GAME_OVER_BROADCAST').format(player.name))
+            broadcast_message = self.language_manager.GetText('DTWT_PLAYER_GAME_OVER_BROADCAST').format(player.name)
+            self.server.broadcast_message(broadcast_message)
+            
+            # Send to QQ group
+            self.send_to_qq_group(broadcast_message)
         # clear game memory
         self.if_in_game = False
         self.player_name = None
@@ -623,6 +690,23 @@ class ARCDTWTPlugin(Plugin):
             "best_record": "REAL NOT NULL",
             "last_play_date": "TEXT"
         })
+        
+        # 检查并添加缺失的列（用于数据库迁移）
+        self._migrate_database()
+
+    def _migrate_database(self):
+        """数据库迁移：检查并添加缺失的列"""
+        try:
+            # 检查player_records表是否存在last_play_date列
+            columns_info = self.db_manager.query_all("PRAGMA table_info(player_records)")
+            column_names = [col['name'] for col in columns_info] if columns_info else []
+            
+            if 'last_play_date' not in column_names:
+                # 添加缺失的last_play_date列
+                self.db_manager.execute("ALTER TABLE player_records ADD COLUMN last_play_date TEXT")
+                print("[ARC DTWT]已为player_records表添加last_play_date列")
+        except Exception as e:
+            print(f"[ARC DTWT]数据库迁移时出现错误: {e}")
 
     def update_game_facility(self, screen_start: tuple, screen_end: tuple, trigger_pos: tuple) -> bool:
         """
@@ -681,3 +765,21 @@ class ARCDTWTPlugin(Plugin):
                 result['trigger_z']
             )
         }
+
+    def send_to_qq_group(self, message: str):
+        """
+        发送消息到QQ群
+        :param message: 要发送的消息
+        """
+        try:
+            # 获取 qqsync_plugin 插件
+            qqsync = self.server.plugin_manager.get_plugin('qqsync_plugin')
+            if qqsync is None:
+                self.logger.warning("[弧光·别踩白块] QQSync 插件未找到，无法发送群消息")
+                return
+            
+            # 发送消息到QQ群
+            success = qqsync.api_send_message(message)
+        except Exception as e:
+            self.logger.error(f"[弧光·别踩白块] QQ群消息发送异常: {str(e)}")
+            # 即使QQ群发送失败，也不影响游戏正常运行

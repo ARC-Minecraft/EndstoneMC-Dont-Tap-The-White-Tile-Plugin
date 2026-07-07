@@ -1,4 +1,4 @@
-# ARC Don't Tap The White Tile Plugin
+# ARC Don't Tap The White Tile Plugin v0.0.1.4
 
 [English](#English) | [中文](#中文)
 
@@ -13,10 +13,14 @@
 ARC Don't Tap The White Tile is a classic mini-game plugin for Minecraft Bedrock servers. Players need to quickly tap black tiles to clear rows. The faster you clear them, the better ranking you'll get based on your completion time.
 
 ## Features
-- Classic Don't Tap White Tile gameplay
+- Classic Don't Tap White Tile gameplay with 30-second time limit
 - Custom configurations
-- Multi-language support
+- Multi-language support (Chinese/English)
 - Player records and rankings system
+- **Daily Check-in Rewards**: Get money rewards for first daily completion
+- **Ranking Rewards**: Top 3 record breakers receive special money rewards
+- **Economy Integration**: Compatible with arc_core and umoney plugins
+- **Smart Timeout System**: Games automatically end after 30 seconds
 
 ## Installation
 1. Place the plugin file in your server's plugins folder
@@ -35,6 +39,10 @@ ARC Don't Tap The White Tile is a classic mini-game plugin for Minecraft Bedrock
 DEFAULT_LANGUAGE_CODE=ZH-CN  # Language setting (ZH-CN/ENG)
 DATABASE_PATH=DTWTdata.db    # Database file path
 TOTAL_BLACK_TILE_NUM=20      # Total rows to clear in each game
+DAILY_REWARD_AMOUNT=500      # Daily first completion reward amount
+FIRST_PLACE_REWARD=10000     # 1st place record breaking reward
+SECOND_PLACE_REWARD=5000     # 2nd place record breaking reward
+THIRD_PLACE_REWARD=2500      # 3rd place record breaking reward
 ```
 
 ### Commands
@@ -52,16 +60,26 @@ TOTAL_BLACK_TILE_NUM=20      # Total rows to clear in each game
 5. A hint message will be shown white when setup is complete
 6. Break the trigger block to start playing
 
+### Reward System
+- **Daily Rewards**: Players get money rewards for their first daily completion
+- **Ranking Rewards**: Breaking into top 3 rankings grants special money rewards
+- **Economy Requirements**: Requires arc_core or umoney plugin for money rewards
+- **Game Timeout**: Each game has a 30-second time limit
+
 # 中文
 
 ## 简介
 ARC别踩白块是一个经典的Minecraft基岩版服务器小游戏插件。玩家需要快速点击黑色方块来消除行，完成速度越快，根据用时排名就越高。
 
 ## 特性
-- 经典别踩白块玩法
+- 经典别踩白块玩法，30秒超时限制
 - 自定义配置选项
-- 多语言支持
+- 多语言支持（中文/英文）
 - 玩家记录与排名系统
+- **每日打卡奖励**：每日首次完成可获得金钱奖励
+- **破纪录奖励**：前三名破纪录者可获得特殊金钱奖励
+- **经济插件集成**：兼容arc_core和umoney经济插件
+- **智能超时系统**：游戏30秒后自动结束
 
 ## 安装
 1. 将插件文件放入服务器插件文件夹
@@ -81,6 +99,10 @@ ARC别踩白块是一个经典的Minecraft基岩版服务器小游戏插件。�
 DEFAULT_LANGUAGE_CODE=ZH-CN  # 语言设置（ZH-CN/ENG）
 DATABASE_PATH=DTWTdata.db    # 数据库文件路径
 TOTAL_BLACK_TILE_NUM=20      # 每局游戏需要消除的总行数
+DAILY_REWARD_AMOUNT=500      # 每日首次完成奖励金额
+FIRST_PLACE_REWARD=10000     # 第一名破纪录奖励
+SECOND_PLACE_REWARD=5000     # 第二名破纪录奖励
+THIRD_PLACE_REWARD=2500      # 第三名破纪录奖励
 ```
 
 ### 命令
@@ -97,3 +119,9 @@ TOTAL_BLACK_TILE_NUM=20      # 每局游戏需要消除的总行数
 - 右键点击触发方块
 5. 设置完成后会有提示
 6. 打碎触发方块即可开始游戏
+
+### 奖励系统
+- **每日奖励**：玩家每日首次完成游戏可获得金钱奖励
+- **排名奖励**：打破前三名纪录可获得特殊金钱奖励
+- **经济插件要求**：需要安装arc_core或umoney插件来发放金钱奖励
+- **游戏超时**：每局游戏限时30秒

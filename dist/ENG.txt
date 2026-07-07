@@ -1,4 +1,5 @@
 DTWT_DESCRIPTION=[ARC DTWT] Don't Tap The White Tile is a fun and exciting mini-game where players must quickly click on black tiles. Each time a black tile is clicked, the entire row it belongs to will be cleared. The goal of the game is to clear {0} rows of black tiles as quickly as possible. The plugin includes a built-in timer to record the time taken by players to complete the challenge, and the fastest players are ranked accordingly! \\nLeaderboard: \\n1.{1} \\n2.{2} \\n3.{3} \\nYour Best Record: \\nTime: {4} \\nRank: {5}
+DTWT_HAS_ANOTHER_CREATOR_MESSAGE=[ARC DTWT] Another player ({0}) is currently configuring the mini-game. Please wait for them to finish before trying again!
 DTWT_CREATE_HINT1=[ARC DTWT] Begin configuring the Don't Tap The White Tile game by clicking on the bottom-left corner block of the display screen for the game!
 DTWT_CREATE_DISPLAYER_START_CORNER_SET_MESSAGE=[ARC DTWT] Starting corner block successfully set. Coordinates: Dimension {0}
 DTWT_CREATE_HINT2=[ARC DTWT] Please click on the top-right corner block of the display screen for the game!
