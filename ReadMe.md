@@ -1,4 +1,6 @@
 # ARC Don't Tap The White Tile Plugin v0.0.1.4
+[![Codacy Grade](https://app.codacy.com/project/badge/Grade/5a63d2a6d0b74c9d9d05d98b7acd581b)](https://app.codacy.com/gh/DEVILENMO/EndstoneMC-Dont-Tap-The-White-Tile-Plugin/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
 
 [English](#English) | [中文](#中文)
 
