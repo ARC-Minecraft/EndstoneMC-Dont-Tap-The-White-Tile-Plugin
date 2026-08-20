@@ -163,4 +163,5 @@ wheelhouse/
 
 # Cursor IDE
 .cursor/
+.joycode/
 
