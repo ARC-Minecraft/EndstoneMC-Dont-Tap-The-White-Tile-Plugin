@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "endstone_arc_dtwt"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = []
 authors = [
     { name = "DEVILENMO", email = "DEVILENMO@gmail.com" },
 ]
 description = "ARC Don't Tap the White Tile mini game plugin."
-readme = "README.md"
+readme = "ReadMe.md"
 license = { file = "LICENSE" }
 keywords = ["endstone", "plugin"]
 

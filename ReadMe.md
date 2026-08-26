@@ -1,5 +1,6 @@
-# ARC Don't Tap The White Tile Plugin v0.0.1.4
+# ARC Don't Tap The White Tile Plugin v0.0.3
 [![Codacy Grade](https://app.codacy.com/project/badge/Grade/5a63d2a6d0b74c9d9d05d98b7acd581b)](https://app.codacy.com/gh/DEVILENMO/EndstoneMC-Dont-Tap-The-White-Tile-Plugin/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Version](https://img.shields.io/badge/version-v0.0.3-blue)](https://github.com/ARC-Minecraft/EndstoneMC-Dont-Tap-The-White-Tile-Plugin)
 
 
 [English](#English) | [中文](#中文)
@@ -127,3 +128,9 @@ THIRD_PLACE_REWARD=2500      # 第三名破纪录奖励
 - **排名奖励**：打破前三名纪录可获得特殊金钱奖励
 - **经济插件要求**：需要安装arc_core或umoney插件来发放金钱奖励
 - **游戏超时**：每局游戏限时30秒
+
+## 更新日志
+
+### v0.0.3
+- **修复群聊推送**：对接 `arc_qq_sync_astrbot`（AstrBot 弧光消息中枢），优先 `api_send_raw`
+- **减少刷屏**：挑战失败不再全服广播、不再推送到 QQ 群（通关仍广播）

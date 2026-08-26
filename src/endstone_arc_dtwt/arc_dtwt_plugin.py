@@ -374,7 +374,7 @@ class ARCDTWTPlugin(Plugin):
                 if new_rank is not None and new_rank <= 3:
                     self.check_and_give_rank_reward(player, new_rank)
             
-            # Broadcast
+            # Broadcast win only（失败不广播，避免刷屏）
             best_time = self.get_player_best_time(player.xuid)
             player_rank = self.get_player_rank(player.xuid)
             broadcast_message = self.language_manager.GetText('DTWT_PLAYER_WIN_BROADCAST').format(player.name,
@@ -386,14 +386,8 @@ class ARCDTWTPlugin(Plugin):
             # Send to QQ group
             self.send_to_qq_group(broadcast_message)
         else:
-            # Set displayer color
+            # Set displayer color；挑战失败仅改屏显色，不广播、不推群
             self.display_single_color('red')
-            # Broadcast
-            broadcast_message = self.language_manager.GetText('DTWT_PLAYER_GAME_OVER_BROADCAST').format(player.name)
-            self.server.broadcast_message(broadcast_message)
-            
-            # Send to QQ group
-            self.send_to_qq_group(broadcast_message)
         # clear game memory
         self.if_in_game = False
         self.player_name = None
@@ -766,20 +760,45 @@ class ARCDTWTPlugin(Plugin):
             )
         }
 
+    def _get_qq_sync_plugin(self):
+        """Resolve ARC QQ Sync plugin (AstrBot hub id first, legacy id fallback).
+
+        Endstone 会把 entry-point 里的 '-' 转成 '_'，故优先查找 arc_qq_sync_astrbot。
+        """
+        pm = self.server.plugin_manager
+        for name in (
+            "arc_qq_sync_astrbot",
+            "arc-qq-sync-astrbot",
+            "qqsync_plugin",
+        ):
+            plug = pm.get_plugin(name)
+            if plug is not None:
+                return plug
+        return None
+
     def send_to_qq_group(self, message: str):
         """
-        发送消息到QQ群
-        :param message: 要发送的消息
+        发送消息到QQ群（经弧光 EndStone 消息中枢）。
+        优先 api_send_raw（自动加服务器前缀），其次 api_send_message。
         """
         try:
-            # 获取 qqsync_plugin 插件
-            qqsync = self.server.plugin_manager.get_plugin('qqsync_plugin')
+            qqsync = self._get_qq_sync_plugin()
             if qqsync is None:
-                self.logger.warning("[弧光·别踩白块] QQSync 插件未找到，无法发送群消息")
+                self.logger.warning("[弧光·别踩白块] QQ Sync 插件未找到，无法发送群消息")
                 return
-            
-            # 发送消息到QQ群
-            success = qqsync.api_send_message(message)
+
+            if hasattr(qqsync, "api_send_raw"):
+                success = qqsync.api_send_raw(message)
+            elif hasattr(qqsync, "api_send_message"):
+                success = qqsync.api_send_message(message)
+            else:
+                self.logger.warning("[弧光·别踩白块] QQ Sync 无可用发送 API")
+                return
+
+            if success:
+                self.logger.info(f"[弧光·别踩白块] 群消息已发送: {message[:80]}...")
+            else:
+                self.logger.warning(f"[弧光·别踩白块] 群消息发送失败: {message[:80]}...")
         except Exception as e:
             self.logger.error(f"[弧光·别踩白块] QQ群消息发送异常: {str(e)}")
             # 即使QQ群发送失败，也不影响游戏正常运行
