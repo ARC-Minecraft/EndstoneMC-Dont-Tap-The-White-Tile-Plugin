@@ -278,27 +278,33 @@ class ARCDTWTPlugin(Plugin):
             return
         return
 
+    @staticmethod
+    def _is_overworld_dimension(dimension_name: str) -> bool:
+        """兼容 Dimension.name（Overworld）与规范 ID（minecraft:overworld）。"""
+        raw = str(dimension_name or "").strip()
+        if not raw:
+            return False
+        key = "".join(c for c in raw.lower() if c.isalnum() or c == ":")
+        return key in ("overworld", "minecraft:overworld")
+
     def api_judge_if_start_block(self, x: float, y: float, z: float, dimension_name: str) -> bool:
         """
         判断指定坐标的方块是否为游戏开始方块
         :param x: 方块X坐标
         :param y: 方块Y坐标
         :param z: 方块Z坐标
-        :param dimension_name: 维度名称
+        :param dimension_name: 维度名称（Overworld / overworld / minecraft:overworld 均可）
         :return: 是否为游戏开始方块
         """
-        if self.current_facility is None or dimension_name != "Overworld":
-            # print('No current facility or dimension is not Overworld')
+        if self.current_facility is None or not self._is_overworld_dimension(dimension_name):
             return False
-        
-        # print(f'x: {x}, y: {y}, z: {z}, trigger_pos: {self.current_facility["trigger_pos"]}')
-        # 检查坐标是否匹配触发方块位置
-        if (math.floor(x) == self.current_facility['trigger_pos'][0] and
-            math.floor(y) == self.current_facility['trigger_pos'][1] and
-            math.floor(z) == self.current_facility['trigger_pos'][2]):
-            return True
-        
-        return False
+
+        trigger = self.current_facility["trigger_pos"]
+        return (
+            math.floor(x) == math.floor(trigger[0])
+            and math.floor(y) == math.floor(trigger[1])
+            and math.floor(z) == math.floor(trigger[2])
+        )
 
     @event_handler
     def on_block_breaked(self, event: BlockBreakEvent):
