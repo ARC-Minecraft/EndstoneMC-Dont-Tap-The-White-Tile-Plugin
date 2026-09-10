@@ -114,6 +114,7 @@ class ARCDTWTPlugin(Plugin):
             self.economy_plugin = self.server.plugin_manager.get_plugin('arc_core')
             if self.economy_plugin is not None:
                 print("[ARC DTWT]Using ARC Core economy system for money rewards.")
+                self._register_arc_main_menu_button()
             else:
                 self.economy_plugin = self.server.plugin_manager.get_plugin('umoney')
                 if self.economy_plugin is not None:
@@ -126,7 +127,27 @@ class ARCDTWTPlugin(Plugin):
         self.logger.info(f"{ColorFormat.YELLOW}[ARC DTWT]Plugin enabled!")
 
     def on_disable(self) -> None:
+        try:
+            core = self.server.plugin_manager.get_plugin("arc_core")
+            if core is not None and hasattr(core, "api_unregister_main_menu_button"):
+                core.api_unregister_main_menu_button("arc_dtwt:main")
+        except Exception:
+            pass
         self.logger.info(f"{ColorFormat.YELLOW}[ARC DTWT]Plugin disabled!")
+
+    def _register_arc_main_menu_button(self) -> None:
+        core = getattr(self, "economy_plugin", None)
+        if core is None or not hasattr(core, "api_register_main_menu_button"):
+            return
+        try:
+            core.api_register_main_menu_button(
+                "arc_dtwt:main",
+                "别踩白块小游戏",
+                on_click=self.show_dtwt_panel,
+                priority=6,
+            )
+        except Exception as e:
+            print(f"[ARC DTWT]Failed to register ARC main menu button: {e}")
 
     def on_command(self, sender: CommandSender, command: Command, args: list[str]) -> bool:
         if command.name == "dtwt":
